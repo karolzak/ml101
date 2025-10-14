@@ -55,6 +55,10 @@ dependencies = [
     "xgboost>=2.0.0",
     "lightgbm>=4.0.0",
     "sentence_transformers>=2.4.0",
+    
+    # Deep learning
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
 
     # Data visualization
     "matplotlib>=3.7.0",
