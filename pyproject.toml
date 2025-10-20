@@ -59,6 +59,9 @@ dependencies = [
     # Deep learning
     "torch>=2.0.0",
     "torchvision>=0.15.0",
+    
+    # LLMs and AI APIs
+    "openai>=1.0.0",
 
     # Data visualization
     "matplotlib>=3.7.0",
@@ -75,6 +78,7 @@ dependencies = [
     "beautifulsoup4>=4.12.0",
     "openpyxl>=3.1.0",
     "sqlalchemy>=2.0.0",
+    "tiktoken>=0.3.0",
     
     # Progress bars and utilities
     "tqdm>=4.65.0",
