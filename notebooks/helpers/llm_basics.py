@@ -11,6 +11,143 @@ sns.set_style("whitegrid")
 plt.rcParams['figure.figsize'] = (12, 6)
 plt.rcParams['font.size'] = 10
 
+def model_weights_visualization():
+    word_embeddings = {
+        "The": np.array([0.2, 0.1, 0.8, 0.3]),
+        "cat": np.array([0.9, 0.2, 0.1, 0.7]),
+        "sat": np.array([0.3, 0.8, 0.2, 0.4]),
+    }
+    # Possible next words with their embeddings
+    candidates = {
+        "on": np.array([0.4, 0.7, 0.3, 0.5]),
+        "under": np.array([0.5, 0.6, 0.4, 0.3]),
+        "near": np.array([0.6, 0.5, 0.5, 0.2]),
+        "quickly": np.array([0.1, 0.3, 0.9, 0.8]),
+    }
+    np.random.seed(42)
+    W1 = np.array([
+        [ 0.8, -0.2,  0.3,  0.5],
+        [-0.3,  0.9,  0.1,  0.2],
+        [ 0.4,  0.1,  0.7, -0.4],
+        [ 0.2,  0.6, -0.1,  0.8]
+    ])
+
+    # Bias terms (more parameters!)
+    b1 = np.array([0.1, -0.2, 0.3, 0.0])
+
+
+    # Step 3: Mathematical Transformation
+    # =====================================================
+    # Combine the input embeddings (simplified: just average them)
+    input_vector = np.mean([word_embeddings["The"], 
+                            word_embeddings["cat"], 
+                            word_embeddings["sat"]], axis=0)
+
+    # Apply the transformation
+    hidden = np.dot(W1, input_vector) + b1
+
+    scores = {}
+    for word, embedding in candidates.items():
+        # Calculate similarity (dot product) between transformed input and candidate
+        score = np.dot(hidden, embedding)
+        scores[word] = score
+
+    # Find the winner
+    best_word = max(scores, key=scores.get)
+
+    # Draw a simplified neural network diagram showing the flow
+    fig, ax = plt.subplots(1, 1, figsize=(14, 8))
+    ax.axis('off')
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, 10)
+
+    # Define positions
+    input_x, hidden_x, output_x = 1.5, 5, 8.5
+    input_y_positions = [8, 6.5, 5, 3.5]
+    hidden_y_positions = [8, 6, 4, 2]
+    output_y_positions = [7, 5.5, 4, 2.5]
+
+    # Draw input layer
+    for i, (word, y) in enumerate(zip(["The", "cat", "sat", "(combined)"], input_y_positions)):
+        circle = plt.Circle((input_x, y), 0.3, color='lightblue', ec='black', linewidth=2, zorder=3)
+        ax.add_patch(circle)
+        ax.text(input_x - 0.4, y, word, ha='right', va='center', fontsize=12, fontweight='bold')
+        if i < 3:
+            vec = word_embeddings[word]
+            ax.text(input_x, y - 0.6, f'[{vec[0]:.1f},{vec[1]:.1f},{vec[2]:.1f},{vec[3]:.1f}]', 
+                ha='center', va='top', fontsize=9, color='darkblue')
+
+    # Draw hidden layer
+    for i, y in enumerate(hidden_y_positions):
+        circle = plt.Circle((hidden_x, y), 0.35, color='gold', ec='black', linewidth=2, zorder=3)
+        ax.add_patch(circle)
+        ax.text(hidden_x, y, f'h{i+1}', ha='center', va='center', fontsize=12, fontweight='bold')
+
+    # Draw output layer
+    for i, (word, y) in enumerate(zip(["on", "under", "near", "quickly"], output_y_positions)):
+        color = 'lightgreen' if word == best_word else 'lightcoral'
+        circle = plt.Circle((output_x, y), 0.3, color=color, ec='black', linewidth=2, zorder=3)
+        ax.add_patch(circle)
+        ax.text(output_x + 0.4, y, f'{word}: {scores[word]:.2f}', 
+            ha='left', va='center', fontsize=12, fontweight='bold')
+
+    # Draw connections (weights) from input to hidden
+    for in_y in [input_y_positions[3]]:  # Just from combined input
+        for hid_y in hidden_y_positions:
+            ax.plot([input_x + 0.3, hidden_x - 0.35], [in_y, hid_y], 
+                'gray', alpha=0.4, linewidth=1, zorder=1)
+
+    # Draw connections from hidden to output
+    for hid_y in hidden_y_positions:
+        for out_y in output_y_positions:
+            ax.plot([hidden_x + 0.35, output_x - 0.3], [hid_y, out_y], 
+                'gray', alpha=0.4, linewidth=1, zorder=1)
+
+    # Add labels
+    ax.text(input_x, 9.3, 'INPUT LAYER\n(Words as Numbers)', 
+        ha='center', fontsize=12, fontweight='bold', 
+        bbox=dict(boxstyle='round,pad=0.5', facecolor='lightblue', alpha=0.5))
+
+    ax.text(hidden_x, 9.3, 'HIDDEN LAYER\n(Weights × Input)', 
+        ha='center', fontsize=12, fontweight='bold',
+        bbox=dict(boxstyle='round,pad=0.5', facecolor='gold', alpha=0.5))
+
+    ax.text(output_x, 9.3, 'OUTPUT LAYER\n(Next Word Scores)', 
+        ha='center', fontsize=12, fontweight='bold',
+        bbox=dict(boxstyle='round,pad=0.5', facecolor='lightgreen', alpha=0.5))
+
+    # Add weight annotations
+    ax.annotate('WEIGHTS (W1)\n16 parameters\n\n↓\n\nW × input + bias',
+                xy=(3.2, 5.5), xytext=(3.2, 5.5),
+                fontsize=12, ha='center', va='center',
+                bbox=dict(boxstyle='round,pad=0.7', facecolor='yellow', alpha=0.7, linewidth=2))
+
+    ax.annotate('MORE WEIGHTS\n16 parameters\n\n↓\n\nW × hidden',
+                xy=(6.7, 5.5), xytext=(6.7, 5.5),
+                fontsize=12, ha='center', va='center',
+                bbox=dict(boxstyle='round,pad=0.7', facecolor='yellow', alpha=0.7, linewidth=2))
+
+    # Title
+    ax.text(5, 0.5, 'A Neural Network = Mathematical Function with Learned Weights', 
+        ha='center', fontsize=14, fontweight='bold',
+        bbox=dict(boxstyle='round,pad=0.7', facecolor='white', edgecolor='black', linewidth=2))
+
+    plt.tight_layout()
+    plt.show()
+
+    print("\n" + "="*70)
+    print("🧠 THE CORE CONCEPT:")
+    print("="*70)
+    print("This toy network has: 4 inputs × 4 hidden + 4 hidden × 4 outputs")
+    print(f"                      = 16 + 16 + 8 bias = 40 parameters total")
+    print("\nA real LLM like GPT-4:")
+    print("  • Has 100+ layers (not just 2)")
+    print("  • Each layer has millions of connections")
+    print("  • Total: ~1,760,000,000,000 parameters")
+    print("\nBut the PRINCIPLE is exactly the same:")
+    print("  Text → Numbers → Weights × Numbers → More Numbers → Prediction")
+    print("\n🎯 The 'magic' is in the WEIGHTS, learned from massive data!")
+
 def model_scale_comparison():
     # Model scale comparison
     models = {
@@ -33,7 +170,7 @@ def model_scale_comparison():
             label = f'{params/1000:.0f}T'
         else:
             label = f'{params:.0f}B'
-        ax.text(params + max(models.values())*0.02, i, label, va='center', fontweight='bold', fontsize=11)
+        ax.text(params + max(models.values())*0.02, i, label, va='center', fontweight='bold', fontsize=12)
 
     ax.set_xlabel('Parameters / Synapses', fontsize=13, fontweight='bold')
     ax.set_title('The Scale of "Large" in LLMs\n(B = Billion, T = Trillion)', fontsize=15, fontweight='bold', pad=20)
@@ -44,7 +181,7 @@ def model_scale_comparison():
     ax.annotate('Each parameter is a learned weight\nthat helps predict the next word',
                 xy=(175, 1), xytext=(8000, 2.5),
                 arrowprops=dict(arrowstyle='->', color='black', lw=2),
-                fontsize=11, bbox=dict(boxstyle='round,pad=0.5', facecolor='yellow', alpha=0.3))
+                fontsize=12, bbox=dict(boxstyle='round,pad=0.5', facecolor='yellow', alpha=0.3))
 
     plt.tight_layout()
     plt.show()
@@ -86,7 +223,7 @@ def calc_memory_and_costs():
         'NVIDIA H200': {'memory_gb': 141, 'cost_per_hour': 12.00}  # Estimated
     }
 
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(18, 14))
+    fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(12, 30))
 
     # 1. Model memory requirements
     model_names = list(memory_data.keys())
@@ -103,12 +240,6 @@ def calc_memory_and_costs():
     ax1.set_xlabel('Memory Required (GB)', fontsize=13, fontweight='bold')
     ax1.set_title('Model Memory Requirements\n(FP16 Precision)', fontsize=15, fontweight='bold', pad=20)
     ax1.grid(axis='x', alpha=0.3)
-
-    # Add GPU reference lines
-    for gpu, specs in gpu_specs.items():
-        ax1.axvline(x=specs['memory_gb'], color='red', linestyle='--', alpha=0.5, linewidth=2)
-        ax1.text(specs['memory_gb'], len(model_names) - 0.5, f'{gpu}\n({specs["memory_gb"]}GB)', 
-                rotation=90, va='bottom', ha='right', fontsize=9, color='red')
 
     # 2. GPUs needed per model
     gpu_counts = {}
@@ -142,7 +273,7 @@ def calc_memory_and_costs():
     ax2.set_title('GPU Count Needed for Inference\n(Minimum Configuration)', fontsize=15, fontweight='bold', pad=20)
     ax2.set_xticks(x)
     ax2.set_xticklabels(model_names, rotation=15, ha='right')
-    ax2.legend(loc='upper left', fontsize=10)
+    ax2.legend(loc='upper left', fontsize=12)
     ax2.grid(axis='y', alpha=0.3)
 
     # 3. Cost comparison for running models (per hour)
@@ -153,25 +284,32 @@ def calc_memory_and_costs():
             cost = gpu_counts[model][gpu] * gpu_specs[gpu]['cost_per_hour']
             costs_per_hour[model][gpu] = cost
 
-    # Stacked bar chart for costs
-    bottom = np.zeros(len(model_names))
+    # Create grouped bar chart for costs
+    x = np.arange(len(model_names))
+    width = 0.25
     colors_cost = ['#3498db', '#e67e22', '#9b59b6']
 
     for i, gpu in enumerate(gpu_names):
         costs = [costs_per_hour[m][gpu] for m in model_names]
-        ax3.bar(model_names, costs, label=gpu, alpha=0.8, edgecolor='black', 
+        offset = (i - 1) * width
+        bars = ax3.bar(x + offset, costs, width, label=gpu, alpha=0.8, edgecolor='black', 
                 linewidth=1.5, color=colors_cost[i])
+        
+        # Add value labels on bars
+        for bar in bars:
+            height = bar.get_height()
+            if height > 0:
+                ax3.text(bar.get_x() + bar.get_width()/2., height,
+                        f'${height:.0f}',
+                        ha='center', va='bottom', fontweight='bold', fontsize=10)
 
-    for i, model in enumerate(model_names):
-        total_cost = sum(costs_per_hour[model].values()) / len(gpu_names)
-        ax3.text(i, total_cost + 5, f'~${total_cost:.0f}/hr', 
-                ha='center', fontweight='bold', fontsize=11)
-
+    ax3.set_xlabel('Model', fontsize=13, fontweight='bold')
     ax3.set_ylabel('Cost per Hour (USD)', fontsize=13, fontweight='bold')
     ax3.set_title('Inference Cost Comparison\n(Cloud GPU Pricing)', fontsize=15, fontweight='bold', pad=20)
-    ax3.legend(loc='upper left', fontsize=10)
+    ax3.set_xticks(x)
+    ax3.set_xticklabels(model_names, rotation=15, ha='right')
+    ax3.legend(loc='upper left', fontsize=12)
     ax3.grid(axis='y', alpha=0.3)
-    plt.setp(ax3.xaxis.get_majorticklabels(), rotation=15, ha='right')
 
     # 4. Training cluster size comparison
     training_gpus = {
@@ -252,24 +390,28 @@ def visualize_real_next_word_predictions(prompt: str = None, temperature: float 
 
     # Extract the actual probabilities from chat completion
     logprobs_data = response.choices[0].logprobs.content[0].top_logprobs
+    # logprobs_data = response.choices[0].logprobs.content[0].top_logprobs
 
     # Convert log probabilities to actual probabilities
     tokens = [item.token for item in logprobs_data]
     logprobs = [item.logprob for item in logprobs_data]
-    probs = [math.exp(lp) for lp in logprobs]
+    # Convert log probabilities to actual probabilities using softmax
+    logprobs_array = np.array(logprobs)
+    exp_logprobs = np.exp(logprobs_array - np.max(logprobs_array))  # Subtract max for numerical stability
+    probs = exp_logprobs / np.sum(exp_logprobs)  # Softmax normalization
 
     using_real_data = True
     print("✅ Successfully connected to Azure OpenAI!")
         
     # Create visualization
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 7))
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 12))
 
     # Bar chart of top predictions
     colors_bars = plt.cm.viridis(np.linspace(0.3, 0.9, len(tokens)))
     bars = ax1.barh(range(len(tokens)), probs, color=colors_bars, edgecolor='black', linewidth=1.5)
     ax1.set_yticks(range(len(tokens)))
-    ax1.set_yticklabels([f'"{t}"' for t in tokens], fontsize=11)
-    ax1.set_xlabel('Probability', fontsize=12, fontweight='bold')
+    ax1.set_yticklabels([f'"{t}"' for t in tokens], fontsize=13)
+    ax1.set_xlabel('Probability', fontsize=13, fontweight='bold')
     ax1.set_title(f'Next-Word Predictions for: "{prompt} ____"\n{"[REAL Azure OpenAI Data]" if using_real_data else "[Simulated Data]"}', 
                 fontsize=14, fontweight='bold', pad=20)
     ax1.grid(axis='x', alpha=0.3)
@@ -280,7 +422,7 @@ def visualize_real_next_word_predictions(prompt: str = None, temperature: float 
         width = bar.get_width()
         ax1.text(width + 0.01, bar.get_y() + bar.get_height()/2, 
                 f'{prob*100:.1f}%', 
-                va='center', fontweight='bold', fontsize=10)
+                va='center', fontweight='bold', fontsize=14)
 
     # Highlight the winner
     ax1.patches[0].set_edgecolor('red')
@@ -412,7 +554,7 @@ def compare_vocab_sizes():
     # Calculate implications
     avg_chars_per_token = char_tokens / gpt4_tokens
 
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(18, 14))
+    fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(12, 30))
 
     # 1. Vocabulary sizes comparison
     models = list(vocab_sizes.keys())
@@ -582,7 +724,7 @@ def visualize_training_data():
         'Social Media\n& Forums': 3
     }
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 14))
 
     # Pie chart of data sources
     colors_pie = plt.cm.Set3(range(len(data_sources)))
@@ -625,7 +767,7 @@ def visualize_training_data():
 def visualize_training_pipeline():
     # Visualize the 3-phase training pipeline
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 8))
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 12))
 
     # Phase 1: Training Pipeline Flowchart
     ax1.axis('off')
@@ -666,34 +808,37 @@ def visualize_training_pipeline():
     ]
 
     ax1.text(0.5, 0.95, 'The 3-Phase LLM Training Pipeline', 
-            ha='center', fontsize=18, fontweight='bold')
+            ha='center', fontsize=20, fontweight='bold')
 
     for phase in phases:
         y = phase['y']
         
-        # Phase box
-        rect = plt.Rectangle((0.1, y - 0.08), 0.8, 0.15, 
+        # Phase box - smaller and more compact
+        rect = plt.Rectangle((0.1, y - 0.08), 0.8, 0.14, 
                             facecolor=phase['color'], alpha=0.2, 
-                            edgecolor=phase['color'], linewidth=3)
+                            edgecolor=phase['color'], linewidth=2)
         ax1.add_patch(rect)
         
         # Phase name
-        ax1.text(0.5, y + 0.05, phase['name'], 
-                ha='center', fontsize=14, fontweight='bold', color=phase['color'])
+        ax1.text(0.5, y + 0.07, phase['name'], 
+                ha='center', fontsize=16, fontweight='bold', color=phase['color'])
         
-        # Details
-        details = f"Goal: {phase['goal']}\nData: {phase['data']}\nCost: {phase['cost']} | Time: {phase['time']}"
-        ax1.text(0.5, y - 0.02, details, 
-                ha='center', fontsize=9, style='italic', color='#2c3e50')
+        # Details - split into two lines for better readability
+        line1 = f"Goal: {phase['goal']} | Data: {phase['data']}"
+        line2 = f"Cost: {phase['cost']} | Time: {phase['time']}"
+        ax1.text(0.5, y + 0.02, line1, 
+                ha='center', fontsize=13, color='#2c3e50')
+        ax1.text(0.5, y - 0.025, line2, 
+                ha='center', fontsize=13, color='#2c3e50')
         
         # Result
-        ax1.text(0.5, y - 0.06, f"→ {phase['result']}", 
-                ha='center', fontsize=10, fontweight='bold', color='#7f8c8d')
+        ax1.text(0.5, y - 0.07, f"→ {phase['result']}", 
+                ha='center', fontsize=13, fontweight='bold', color='#7f8c8d')
         
         # Arrow to next phase
         if y > 0.25:
-            ax1.annotate('', xy=(0.5, y - 0.09), xytext=(0.5, y - 0.12),
-                        arrowprops=dict(arrowstyle='->', lw=3, color='black'))
+            ax1.annotate('', xy=(0.5, y - 0.09), xytext=(0.5, y - 0.17),
+                        arrowprops=dict(arrowstyle='<-', lw=2, color='black'))
 
     ax1.text(0.5, 0.05, '💡 Key: Each phase builds on the previous one', 
             ha='center', fontsize=11, style='italic',
@@ -728,17 +873,17 @@ def visualize_training_pipeline():
 
     # Add annotations
     ax2.annotate('Pre-training:\nLearn basic patterns', 
-                xy=(30, 3.5), xytext=(50, 4.5),
+                xy=(20, 2.8), xytext=(60, 4.5),
                 arrowprops=dict(arrowstyle='->', color='#3498db', lw=2),
                 fontsize=10, color='#3498db', fontweight='bold')
 
     ax2.annotate('Fine-tuning:\nLearn to follow instructions', 
-                xy=(30, 1.2), xytext=(50, 1.8),
+                xy=(25, 1.4), xytext=(65, 2.2),
                 arrowprops=dict(arrowstyle='->', color='#2ecc71', lw=2),
                 fontsize=10, color='#2ecc71', fontweight='bold')
 
     ax2.annotate('RLHF:\nAlign with human values', 
-                xy=(30, 0.5), xytext=(50, 0.2),
+                xy=(40, 0.7), xytext=(70, 0.9),
                 arrowprops=dict(arrowstyle='->', color='#e74c3c', lw=2),
                 fontsize=10, color='#e74c3c', fontweight='bold')
 
@@ -797,8 +942,7 @@ def apply_temperature(probs, temperature):
 def visualize_temperature_effects():
     temperatures = [0.0, 0.5, 1.0, 2.0]
 
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(18, 12))
-    axes = [ax1, ax2, ax3, ax4]
+    fig, axes = plt.subplots(4, 1, figsize=(12, 30))
 
     for ax, temp in zip(axes, temperatures):
         probs = apply_temperature(base_probs, temp)
@@ -817,13 +961,15 @@ def visualize_temperature_effects():
             if prob > 0.01:
                 ax.text(bar.get_x() + bar.get_width()/2., prob + 0.02,
                     f'{prob*100:.1f}%',
-                    ha='center', fontweight='bold', fontsize=10)
+                    ha='center', fontweight='bold', fontsize=13)
         
-        ax.set_ylabel('Probability', fontsize=12, fontweight='bold')
+        ax.set_ylabel('Probability', fontsize=13, fontweight='bold')
         ax.set_ylim(0, 1.1)
         ax.set_title(f'Temperature = {temp}\n{"(Deterministic)" if temp == 0 else "(Creative)" if temp > 1 else "(Balanced)"}', 
                     fontsize=14, fontweight='bold', pad=15)
         ax.grid(axis='y', alpha=0.3)
+        ax.tick_params(axis='y', labelsize=12)
+        ax.tick_params(axis='x', labelsize=13)
         plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
         
         # Add description
@@ -837,7 +983,7 @@ def visualize_temperature_effects():
             desc = "More uniform distribution\nHighly creative/unpredictable"
         
         ax.text(0.98, 0.95, desc, transform=ax.transAxes,
-            fontsize=10, verticalalignment='top', horizontalalignment='right',
+            fontsize=14, verticalalignment='top', horizontalalignment='right',
             bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
 
     plt.tight_layout()
@@ -868,18 +1014,18 @@ def visualize_temperature_effects():
     print("   - Different use cases need different settings")
     print("   - Most APIs default to 0.7-1.0")
 
-def visualize_token_by_token():
-    # Visualize token-by-token generation process
+def visualize_word_by_word():
+    # Visualize word-by-word generation process
 
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(18, 14))
+    fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(12, 30))
 
     # 1. Step-by-step generation visualization
     ax1.axis('off')
     ax1.set_xlim(0, 1)
     ax1.set_ylim(0, 1)
 
-    ax1.text(0.5, 0.95, 'Token-by-Token Generation Process', 
-            ha='center', fontsize=18, fontweight='bold')
+    ax1.text(0.5, 0.95, 'Word-by-Word Generation Process', 
+            ha='center', fontsize=20, fontweight='bold')
 
     prompt_text = "The future of AI is"
     generated_tokens = ["bright", "and", "full", "of", "potential"]
@@ -899,58 +1045,59 @@ def visualize_token_by_token():
         y = y_start - (i * y_step)
         
         # Step label
-        ax1.text(0.02, y + 0.05, step_name, fontsize=11, fontweight='bold', color='#2c3e50')
+        ax1.text(0.02, y + 0.05, step_name, fontsize=13, fontweight='bold', color='#2c3e50')
         
         # Context box
         context_color = '#e8f4f8' if new_token else '#fff9e6'
-        ax1.text(0.15, y + 0.02, context, fontsize=9, fontfamily='monospace',
+        ax1.text(0.15, y + 0.02, context, fontsize=11, fontfamily='monospace',
                 bbox=dict(boxstyle='round,pad=0.5', facecolor=context_color, 
                         edgecolor='#3498db', linewidth=2))
         
         # New token highlighted
         if new_token:
-            ax1.text(0.68, y + 0.02, f'+ "{new_token}"', fontsize=10, fontweight='bold', color='#e74c3c',
+            ax1.text(0.68, y + 0.02, f'+ "{new_token}"', fontsize=12, fontweight='bold', color='#e74c3c',
                     bbox=dict(boxstyle='round,pad=0.3', facecolor='#ffe6e6', 
                             edgecolor='#e74c3c', linewidth=2))
         
         # Prediction
-        ax1.text(0.15, y - 0.03, f'→ {prediction}', fontsize=9, style='italic', color='#7f8c8d')
+        ax1.text(0.15, y - 0.03, f'→ {prediction}', fontsize=11, style='italic', color='#7f8c8d')
         
         # Arrow between steps
         if i < len(steps) - 1:
             ax1.annotate('', xy=(0.08, y - 0.08), xytext=(0.08, y - 0.05),
                         arrowprops=dict(arrowstyle='->', lw=2, color='#2c3e50'))
 
-    ax1.text(0.5, 0.02, '⚡ Key: Each token depends on ALL previous tokens', 
-            ha='center', fontsize=11, style='italic', fontweight='bold',
+    ax1.text(0.5, 0.02, '⚡ Key: Each word depends on ALL previous words', 
+            ha='center', fontsize=13, style='italic', fontweight='bold',
             bbox=dict(boxstyle='round,pad=0.8', facecolor='lightyellow', alpha=0.7))
 
     # 2. Why it feels like "thinking" - time visualization
-    tokens_output = ["The", "key", "to", "success", "in", "AI", "is", "understanding", "fundamentals"]
-    generation_times = [0.05, 0.08, 0.06, 0.12, 0.05, 0.07, 0.06, 0.15, 0.13]  # seconds per token
+    words_output = ["The", "key", "to", "success", "in", "AI", "is", "understanding", "fundamentals"]
+    generation_times = [0.05, 0.08, 0.06, 0.12, 0.05, 0.07, 0.06, 0.15, 0.13]  # seconds per word
 
     cumulative_time = np.cumsum([0] + generation_times)
 
-    ax2.plot(range(len(tokens_output) + 1), cumulative_time, marker='o', linewidth=3, 
+    ax2.plot(range(len(words_output) + 1), cumulative_time, marker='o', linewidth=3, 
             markersize=10, color='#3498db', alpha=0.8)
 
-    # Add token labels
-    for i, (token, time) in enumerate(zip(tokens_output, cumulative_time[1:])):
-        ax2.text(i + 1, time + 0.02, token, ha='center', fontsize=9, 
+    # Add word labels
+    for i, (word, time) in enumerate(zip(words_output, cumulative_time[1:])):
+        ax2.text(i + 1, time + 0.02, word, ha='center', fontsize=11, 
                 fontweight='bold', rotation=45)
 
-    ax2.set_xlabel('Token Number', fontsize=13, fontweight='bold')
+    ax2.set_xlabel('Word Number', fontsize=13, fontweight='bold')
     ax2.set_ylabel('Cumulative Time (seconds)', fontsize=13, fontweight='bold')
     ax2.set_title('Generation Feels Sequential\n(Why you see text appear word-by-word)', 
                 fontsize=15, fontweight='bold', pad=20)
     ax2.grid(alpha=0.3)
-    ax2.set_xlim(-0.5, len(tokens_output) + 0.5)
+    ax2.set_xlim(-0.5, len(words_output) + 0.5)
+    ax2.tick_params(axis='both', labelsize=12)
 
     # Add annotation
-    ax2.annotate('Each token takes time to compute\n→ Sequential appearance', 
+    ax2.annotate('Each word takes time to compute\n→ Sequential appearance', 
                 xy=(5, cumulative_time[5]), xytext=(7, 0.3),
                 arrowprops=dict(arrowstyle='->', color='red', lw=2),
-                fontsize=11, color='red', fontweight='bold',
+                fontsize=12, color='red', fontweight='bold',
                 bbox=dict(boxstyle='round,pad=0.5', facecolor='yellow', alpha=0.3))
 
     # 3. Parallel vs Sequential comparison
@@ -959,38 +1106,38 @@ def visualize_token_by_token():
     ax3.set_ylim(0, 1)
 
     ax3.text(0.5, 0.95, '🚫 Why Parallel Generation is Impossible', 
-            ha='center', fontsize=16, fontweight='bold', color='#e74c3c')
+            ha='center', fontsize=18, fontweight='bold', color='#e74c3c')
 
     # Parallel (not possible)
     ax3.text(0.5, 0.82, '❌ Parallel Generation (NOT POSSIBLE)', 
-            ha='center', fontsize=13, fontweight='bold', color='#e74c3c')
+            ha='center', fontsize=14, fontweight='bold', color='#e74c3c')
 
-    parallel_tokens = ["Token 1", "Token 2", "Token 3", "Token 4"]
+    parallel_words = ["Word 1", "Word 2", "Word 3", "Word 4"]
     y_parallel = 0.70
-    for i, token in enumerate(parallel_tokens):
+    for i, word in enumerate(parallel_words):
         x_pos = 0.2 + (i * 0.15)
-        ax3.text(x_pos, y_parallel, token, ha='center', fontsize=9,
+        ax3.text(x_pos, y_parallel, word, ha='center', fontsize=11,
                 bbox=dict(boxstyle='round,pad=0.3', facecolor='#ffcccc', 
                         edgecolor='red', linewidth=2))
         # All arrows from input
         ax3.annotate('', xy=(x_pos, y_parallel - 0.02), xytext=(x_pos, 0.58),
                     arrowprops=dict(arrowstyle='->', lw=1.5, color='red', linestyle='--'))
 
-    ax3.text(0.5, 0.60, 'Input Context', ha='center', fontsize=10,
+    ax3.text(0.5, 0.60, 'Input Context', ha='center', fontsize=12,
             bbox=dict(boxstyle='round,pad=0.4', facecolor='lightblue', edgecolor='blue', linewidth=2))
 
-    ax3.text(0.5, 0.50, 'Problem: Token 2 needs Token 1 to exist first!', 
-            ha='center', fontsize=10, color='red', style='italic')
+    ax3.text(0.5, 0.50, 'Problem: Word 2 needs Word 1 to exist first!', 
+            ha='center', fontsize=12, color='red', style='italic')
 
     # Sequential (actual)
     ax3.text(0.5, 0.35, '✅ Sequential Generation (ACTUAL)', 
-            ha='center', fontsize=13, fontweight='bold', color='#2ecc71')
+            ha='center', fontsize=14, fontweight='bold', color='#2ecc71')
 
-    seq_tokens = ["Token 1", "Token 2", "Token 3", "Token 4"]
+    seq_words = ["Word 1", "Word 2", "Word 3", "Word 4"]
     y_seq = 0.23
-    for i, token in enumerate(seq_tokens):
+    for i, word in enumerate(seq_words):
         x_pos = 0.15 + (i * 0.18)
-        ax3.text(x_pos, y_seq, token, ha='center', fontsize=9,
+        ax3.text(x_pos, y_seq, word, ha='center', fontsize=11,
                 bbox=dict(boxstyle='round,pad=0.3', facecolor='#ccffcc', 
                         edgecolor='green', linewidth=2))
         # Arrow from previous
@@ -998,8 +1145,8 @@ def visualize_token_by_token():
             ax3.annotate('', xy=(x_pos - 0.02, y_seq), xytext=(x_pos - 0.16, y_seq),
                         arrowprops=dict(arrowstyle='->', lw=2, color='green'))
 
-    ax3.text(0.5, 0.10, 'Each token becomes input for the next → Autoregressive', 
-            ha='center', fontsize=10, color='green', style='italic', fontweight='bold')
+    ax3.text(0.5, 0.10, 'Each word becomes input for the next → Autoregressive', 
+            ha='center', fontsize=12, color='green', style='italic', fontweight='bold')
 
     # 4. Inference cost visualization
     output_lengths = [10, 50, 100, 200, 500, 1000]
@@ -1017,58 +1164,60 @@ def visualize_token_by_token():
                         marker='o', linewidth=3, markersize=10, 
                         color='#3498db', label='Generation Time')
 
-    ax4.set_xlabel('Output Length (tokens)', fontsize=13, fontweight='bold')
-    ax4.set_ylabel('Relative Cost ($)', fontsize=12, fontweight='bold', color='#e74c3c')
-    ax4_twin.set_ylabel('Relative Time (seconds)', fontsize=12, fontweight='bold', color='#3498db')
-    ax4.set_title('Cost & Time Scale Linearly with Output Length\n(Every token costs money and time)', 
+    ax4.set_xlabel('Output Length (words)', fontsize=13, fontweight='bold')
+    ax4.set_ylabel('Relative Cost ($)', fontsize=13, fontweight='bold', color='#e74c3c')
+    ax4_twin.set_ylabel('Relative Time (seconds)', fontsize=13, fontweight='bold', color='#3498db')
+    ax4.set_title('Cost & Time Scale Linearly with Output Length\n(Every word costs money and time)', 
                 fontsize=15, fontweight='bold', pad=20)
 
     ax4.set_xticks(range(len(output_lengths)))
     ax4.set_xticklabels(output_lengths)
     ax4.grid(alpha=0.3, axis='y')
+    ax4.tick_params(axis='both', labelsize=12)
+    ax4_twin.tick_params(axis='y', labelsize=12)
 
     # Add value labels
     for i, (bar, cost) in enumerate(zip(bars, relative_costs)):
-        ax4.text(i, cost + 20, f'{cost}x', ha='center', fontweight='bold', fontsize=9, color='#e74c3c')
+        ax4.text(i, cost + 20, f'{cost}x', ha='center', fontweight='bold', fontsize=12, color='#e74c3c')
 
     # Legend
-    ax4.legend(loc='upper left', fontsize=10)
-    ax4_twin.legend(loc='upper right', fontsize=10)
+    ax4.legend(loc='upper left', fontsize=12)
+    ax4_twin.legend(loc='upper right', fontsize=12)
 
     plt.tight_layout()
     plt.show()
 
-    print("\n🔄 Token-by-Token Generation Explained:")
+    print("\n🔄 Word-by-Word Generation Explained:")
     print("\n📝 Autoregressive Process:")
     print("   1. Model reads your prompt")
-    print("   2. Predicts most likely next token")
-    print("   3. Adds that token to the context")
-    print("   4. Predicts next token (considering ALL previous tokens)")
-    print("   5. Repeats until done (stop token or max length)")
+    print("   2. Predicts most likely next word")
+    print("   3. Adds that word to the context")
+    print("   4. Predicts next word (considering ALL previous words)")
+    print("   5. Repeats until done (stop word or max length)")
     print("\n⏱️ Why It Feels Like 'Thinking':")
-    print("   - Each token takes ~50-200ms to generate")
+    print("   - Each word takes ~50-200ms to generate")
     print("   - Appears sequentially, not all at once")
     print("   - Longer responses take proportionally longer")
     print("   - Gives impression of 'reasoning' or 'writing'")
     print("   - Reality: Pure prediction, no actual thinking")
     print("\n🚫 Why Parallel Generation is Impossible:")
-    print("   - Token N depends on tokens 1 through N-1")
-    print("   - Can't predict Token 3 without knowing Token 2")
+    print("   - Word N depends on words 1 through N-1")
+    print("   - Can't predict Word 3 without knowing Word 2")
     print("   - Must process sequentially (autoregressive)")
     print("   - This is fundamental to transformer architecture")
     print("\n💰 Cost Implications:")
-    print("   - Every output token costs money")
-    print("   - 1000-token output ≈ 100x more expensive than 10-token")
+    print("   - Every output word costs money")
+    print("   - 1000-word output ≈ 100x more expensive than 10-word")
     print("   - Longer outputs = higher latency")
     print("   - Optimize: Be specific to get concise answers")
     print("\n⚡ Performance Impact:")
-    print("   - Input tokens (prompt): Processed in parallel (fast)")
-    print("   - Output tokens: Generated sequentially (slow)")
+    print("   - Input words (prompt): Processed in parallel (fast)")
+    print("   - Output words: Generated sequentially (slow)")
     print("   - Bottleneck: Output generation, not input processing")
     print("   - Strategy: Minimize output length when possible")
     print("\n💡 Business Implications:")
-    print("   ✓ Verbose responses cost more (tokens + time)")
+    print("   ✓ Verbose responses cost more (words + time)")
     print("   ✓ Streaming gives better UX (shows progress)")
-    print("   ✓ Set max_tokens to control costs")
+    print("   ✓ Set max_words to control costs")
     print("   ✓ Cache prompts when possible (some APIs support this)")
     print("   ✗ Don't expect instant long-form generation")
