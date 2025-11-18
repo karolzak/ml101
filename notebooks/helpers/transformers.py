@@ -246,3 +246,52 @@ def visualize_causal_masking(attn_weights, masked_attn, seq_len):
 
     print("\n💡 Notice: With causal masking, upper triangle is all zeros!")
     print("   This is how GPT-style models generate text one token at a time.")
+
+def visualize_attention_heads(attentions, layer_idx, heads_to_show, tokens):
+    """
+    Visualize attention patterns from different heads in a specific layer.
+    
+    Args:
+        attentions: Tuple of attention tensors from model output
+        layer_idx: Layer index to visualize (0-indexed)
+        heads_to_show: List of head indices to display
+        tokens: List of token strings for axis labels
+    """
+    fig, axes = plt.subplots(2, 2, figsize=(16, 14))
+    axes = axes.flatten()
+
+    for idx, head_num in enumerate(heads_to_show):
+        # Get attention weights for this specific head
+        # Shape: (seq_len, seq_len)
+        attn = attentions[layer_idx][0, head_num].detach().numpy()
+        
+        # Create heatmap
+        sns.heatmap(
+            attn,
+            xticklabels=tokens,
+            yticklabels=tokens,
+            cmap='YlOrRd',
+            ax=axes[idx],
+            cbar_kws={'label': 'Attention Weight'},
+            square=True,
+            vmin=0,
+            vmax=1
+        )
+        
+        axes[idx].set_title(f'Layer {layer_idx + 1}, Head {head_num + 1}', 
+                            fontsize=12, fontweight='bold')
+        axes[idx].set_xlabel('Keys (attending to)', fontsize=10)
+        axes[idx].set_ylabel('Queries (attending from)', fontsize=10)
+        
+        # Rotate labels for better readability
+        axes[idx].set_xticklabels(axes[idx].get_xticklabels(), rotation=45, ha='right')
+        axes[idx].set_yticklabels(axes[idx].get_yticklabels(), rotation=0)
+
+    plt.tight_layout()
+    plt.show()
+
+    print("\n🔍 Notice how different heads focus on different patterns:")
+    print("   - Some heads may focus on nearby words (local context)")
+    print("   - Others may focus on specific tokens like [CLS] or punctuation")
+    print("   - Some may show coreference patterns (connecting 'it' to 'mat' or 'cat')")
+    print("   - Different heads learn complementary patterns automatically!")
