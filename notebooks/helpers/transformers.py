@@ -1,13 +1,14 @@
 """
 Visual helpers for Transformers & Attention notebook.
 
-This module contains visualization functions to keep the notebook clean and focused
-on concepts rather than plotting implementation details.
+This module contains visualization functions and utility functions to keep the notebook 
+clean and focused on concepts rather than implementation details.
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import torch
 
 
 def plot_evolution_timeline():
@@ -159,3 +160,89 @@ def plot_rnn_vs_transformer():
     print("   Transformer: Parallel processing → Direct connections → Fast & effective")
     print("\nNotice: In the transformer, you can see connections going in ALL directions,")
     print("        showing that each word can attend to every other word simultaneously!")
+
+
+def create_causal_mask(seq_len):
+    """
+    Create a causal mask for autoregressive attention.
+    
+    Args:
+        seq_len: Sequence length
+        
+    Returns:
+        torch.Tensor: Lower triangular mask where 1 = allowed, 0 = blocked.
+                      Shape: (seq_len, seq_len)
+    
+    Example:
+        >>> mask = create_causal_mask(3)
+        >>> print(mask)
+        tensor([[1., 0., 0.],
+                [1., 1., 0.],
+                [1., 1., 1.]])
+    
+    Usage:
+        Position i can only attend to positions <= i (past and present, not future).
+        This is used in autoregressive models like GPT for causal/masked attention.
+    """
+    # torch.tril creates a lower triangular matrix
+    mask = torch.tril(torch.ones(seq_len, seq_len))
+    return mask
+
+
+def visualize_causal_masking(attn_weights, masked_attn, seq_len):
+    """
+    Visualize the effect of causal masking on attention weights.
+    
+    Creates a side-by-side comparison of attention patterns with and without
+    causal masking to demonstrate how autoregressive models prevent attending
+    to future positions.
+    
+    Args:
+        attn_weights: Original attention weights (batch_size, seq_len, seq_len)
+        masked_attn: Masked attention weights (batch_size, seq_len, seq_len)
+        seq_len: Sequence length
+        
+    Returns:
+        None (displays the plot)
+    """
+    print("\nInterpretation:")
+    print("  - Row 0 (position 0): Can only see position 0 (itself)")
+    print("  - Row 1 (position 1): Can see positions 0-1")
+    print("  - Row 2 (position 2): Can see positions 0-2")
+    print("  - etc. → Each position can only see past and present, not future!")
+    
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+    # Original attention (no mask)
+    sns.heatmap(
+        attn_weights[0].detach().numpy(),
+        annot=True,
+        fmt='.3f',
+        cmap='viridis',
+        square=True,
+        cbar_kws={'label': 'Weight'},
+        ax=ax1
+    )
+    ax1.set_title('Without Causal Mask', fontweight='bold')
+    ax1.set_xlabel('Key Position')
+    ax1.set_ylabel('Query Position')
+
+    # Masked attention
+    sns.heatmap(
+        masked_attn[0].detach().numpy(),
+        annot=True,
+        fmt='.3f',
+        cmap='viridis',
+        square=True,
+        cbar_kws={'label': 'Weight'},
+        ax=ax2
+    )
+    ax2.set_title('With Causal Mask (Autoregressive)', fontweight='bold')
+    ax2.set_xlabel('Key Position')
+    ax2.set_ylabel('Query Position')
+
+    plt.tight_layout()
+    plt.show()
+
+    print("\n💡 Notice: With causal masking, upper triangle is all zeros!")
+    print("   This is how GPT-style models generate text one token at a time.")
