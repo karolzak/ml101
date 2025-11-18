@@ -295,3 +295,173 @@ def visualize_attention_heads(attentions, layer_idx, heads_to_show, tokens):
     print("   - Others may focus on specific tokens like [CLS] or punctuation")
     print("   - Some may show coreference patterns (connecting 'it' to 'mat' or 'cat')")
     print("   - Different heads learn complementary patterns automatically!")
+
+def plot_transformer_architectures():
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as mpatches
+    from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+
+    fig, axes = plt.subplots(1, 3, figsize=(16, 8))
+
+    # Common styling
+    box_style = dict(boxstyle='round,pad=0.3', facecolor='lightblue', edgecolor='black', linewidth=2)
+    attn_style = dict(boxstyle='round,pad=0.3', facecolor='lightcoral', edgecolor='black', linewidth=2)
+    norm_style = dict(boxstyle='round,pad=0.3', facecolor='lightgreen', edgecolor='black', linewidth=2)
+    ff_style = dict(boxstyle='round,pad=0.3', facecolor='lightyellow', edgecolor='black', linewidth=2)
+
+    def draw_block(ax, x, y, width, height, text, style, fontsize=10):
+        """Draw a rectangular block with text"""
+        rect = FancyBboxPatch((x, y), width, height, **style)
+        ax.add_patch(rect)
+        ax.text(x + width/2, y + height/2, text, ha='center', va='center', 
+                fontsize=fontsize, fontweight='bold', wrap=True)
+
+    def draw_arrow(ax, x1, y1, x2, y2):
+        """Draw an arrow between two points"""
+        arrow = FancyArrowPatch((x1, y1), (x2, y2), arrowstyle='->', 
+                            mutation_scale=20, linewidth=2, color='black')
+        ax.add_patch(arrow)
+
+    # ============================================================================
+    # 1. ENCODER-ONLY (BERT)
+    # ============================================================================
+    ax1 = axes[0]
+    ax1.set_xlim(0, 10)
+    ax1.set_ylim(0, 12)
+    ax1.axis('off')
+    ax1.set_title('Encoder-Only (BERT)', fontsize=14, fontweight='bold', pad=20)
+
+    # Input
+    draw_block(ax1, 2, 0.5, 6, 0.8, 'Input Tokens + Positional Encoding', box_style, 9)
+    draw_arrow(ax1, 5, 1.3, 5, 2)
+
+    # Encoder block (repeated)
+    y_start = 2
+    for i in range(2):
+        # Multi-head attention
+        draw_block(ax1, 2, y_start, 6, 1, 'Multi-Head\nSelf-Attention', attn_style)
+        draw_arrow(ax1, 5, y_start + 1, 5, y_start + 1.3)
+        
+        # Add & Norm
+        draw_block(ax1, 2, y_start + 1.3, 6, 0.6, 'Add & Norm', norm_style, 8)
+        draw_arrow(ax1, 5, y_start + 1.9, 5, y_start + 2.2)
+        
+        # Feed Forward
+        draw_block(ax1, 2, y_start + 2.2, 6, 1, 'Feed Forward', ff_style)
+        draw_arrow(ax1, 5, y_start + 3.2, 5, y_start + 3.5)
+        
+        # Add & Norm
+        draw_block(ax1, 2, y_start + 3.5, 6, 0.6, 'Add & Norm', norm_style, 8)
+        
+        if i == 0:
+            draw_arrow(ax1, 5, y_start + 4.1, 5, y_start + 4.5)
+            y_start += 4.5
+        
+    # Output
+    draw_arrow(ax1, 5, 10.6, 5, 11)
+    draw_block(ax1, 2, 11, 6, 0.8, 'Contextual Embeddings', box_style, 9)
+
+    # Annotation
+    ax1.text(5, -0.5, '✓ Bidirectional\n✓ Classification/QA', 
+            ha='center', fontsize=9, style='italic')
+
+    # ============================================================================
+    # 2. DECODER-ONLY (GPT)
+    # ============================================================================
+    ax2 = axes[1]
+    ax2.set_xlim(0, 10)
+    ax2.set_ylim(0, 12)
+    ax2.axis('off')
+    ax2.set_title('Decoder-Only (GPT)', fontsize=14, fontweight='bold', pad=20)
+
+    # Input
+    draw_block(ax2, 2, 0.5, 6, 0.8, 'Input Tokens + Positional Encoding', box_style, 9)
+    draw_arrow(ax2, 5, 1.3, 5, 2)
+
+    # Decoder block (repeated)
+    y_start = 2
+    for i in range(2):
+        # Masked Multi-head attention
+        draw_block(ax2, 2, y_start, 6, 1, 'Masked Multi-Head\nSelf-Attention', attn_style)
+        draw_arrow(ax2, 5, y_start + 1, 5, y_start + 1.3)
+        
+        # Add & Norm
+        draw_block(ax2, 2, y_start + 1.3, 6, 0.6, 'Add & Norm', norm_style, 8)
+        draw_arrow(ax2, 5, y_start + 1.9, 5, y_start + 2.2)
+        
+        # Feed Forward
+        draw_block(ax2, 2, y_start + 2.2, 6, 1, 'Feed Forward', ff_style)
+        draw_arrow(ax2, 5, y_start + 3.2, 5, y_start + 3.5)
+        
+        # Add & Norm
+        draw_block(ax2, 2, y_start + 3.5, 6, 0.6, 'Add & Norm', norm_style, 8)
+        
+        if i == 0:
+            draw_arrow(ax2, 5, y_start + 4.1, 5, y_start + 4.5)
+            y_start += 4.5
+
+    # Output
+    draw_arrow(ax2, 5, 10.6, 5, 11)
+    draw_block(ax2, 2, 11, 6, 0.8, 'Next Token Prediction', box_style, 9)
+
+    # Annotation
+    ax2.text(5, -0.5, '✓ Causal Masking\n✓ Text Generation', 
+            ha='center', fontsize=9, style='italic')
+
+    # ============================================================================
+    # 3. ENCODER-DECODER (T5)
+    # ============================================================================
+    ax3 = axes[2]
+    ax3.set_xlim(0, 10)
+    ax3.set_ylim(0, 12)
+    ax3.axis('off')
+    ax3.set_title('Encoder-Decoder (T5)', fontsize=14, fontweight='bold', pad=20)
+
+    # Input
+    draw_block(ax3, 0.5, 0.5, 4, 0.8, 'Source Input', box_style, 9)
+    draw_arrow(ax3, 2.5, 1.3, 2.5, 2)
+
+    # Encoder (simplified)
+    draw_block(ax3, 0.5, 2, 4, 2.5, 'ENCODER\n\nMulti-Head\nSelf-Attention\n+\nFeed Forward', attn_style)
+    encoder_out_y = 4.5
+    draw_arrow(ax3, 2.5, encoder_out_y, 2.5, encoder_out_y + 0.5)
+    draw_block(ax3, 0.5, encoder_out_y + 0.5, 4, 0.6, 'Encoder Output', box_style, 8)
+
+    # Decoder input
+    draw_block(ax3, 5.5, 0.5, 4, 0.8, 'Target Input', box_style, 9)
+    draw_arrow(ax3, 7.5, 1.3, 7.5, 2)
+
+    # Decoder (simplified)
+    draw_block(ax3, 5.5, 2, 4, 1.2, 'Masked\nSelf-Attention', attn_style, 9)
+    draw_arrow(ax3, 7.5, 3.2, 7.5, 3.5)
+
+    # Cross attention (with connection from encoder)
+    draw_block(ax3, 5.5, 3.5, 4, 1.2, 'Cross-Attention\nto Encoder', 
+            dict(boxstyle='round,pad=0.3', facecolor='orange', edgecolor='black', linewidth=2), 9)
+    # Arrow from encoder to cross-attention
+    draw_arrow(ax3, 4.5, 5.1, 5.5, 4.1)
+
+    draw_arrow(ax3, 7.5, 4.7, 7.5, 5.0)
+
+    # Feed forward
+    draw_block(ax3, 5.5, 5.0, 4, 1.2, 'Feed Forward', ff_style, 9)
+    draw_arrow(ax3, 7.5, 6.2, 7.5, 6.5)
+
+    # Output
+    draw_block(ax3, 5.5, 6.5, 4, 0.8, 'Generated Output', box_style, 9)
+
+    # Annotation
+    ax3.text(5, -0.5, '✓ Encoder + Decoder\n✓ Translation/Summarization', 
+            ha='center', fontsize=9, style='italic')
+
+    plt.tight_layout()
+    plt.show()
+
+    print("\nKey Differences:")
+    print("="*60)
+    print("• ENCODER-ONLY: Processes all tokens bidirectionally")
+    print("                → Good for understanding tasks")
+    print("\n• DECODER-ONLY: Masked attention, sees only past tokens")
+    print("                → Good for generation tasks")
+    print("\n• ENCODER-DECODER: Encoder understands, decoder generates")
+    print("                   → Good for transformation tasks")
