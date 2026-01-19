@@ -59,6 +59,7 @@ dependencies = [
     # Deep learning
     "torch>=2.0.0",
     "torchvision>=0.15.0",
+    "transformers>=4.37.0",
     
     # LLMs and AI APIs
     "openai>=1.0.0",
