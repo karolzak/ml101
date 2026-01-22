@@ -69,11 +69,21 @@ Some notebooks (e.g., `04-llm-basics.ipynb`) require API credentials for live de
 
 ## 📚 Notebooks
 
-- **00-basics.ipynb** - Python and data science fundamentals
-- **01-boston_housing.ipynb** - Regression and feature engineering
-- **02-embeddings.ipynb** - Vector embeddings and semantic search
-- **03-deep-learning.ipynb** - Neural networks with PyTorch
-- **04-llm-basics.ipynb** - Understanding Large Language Models (Executive-level)
+The course progresses from fundamentals through advanced topics in modern machine learning and AI:
+
+- **[00-basics.ipynb](notebooks/00-basics.ipynb)** - Data Science & ML 101: hands-on introduction using the Titanic dataset
+
+- **[01-boston_housing.ipynb](notebooks/01-boston_housing.ipynb)** - ML homework exercises with Boston Housing dataset
+
+- **[02-embeddings.ipynb](notebooks/02-embeddings.ipynb)** - Feature vectors and embeddings
+
+- **[03-deep-learning.ipynb](notebooks/03-deep-learning.ipynb)** - Neural networks with PyTorch
+
+- **[04-llm-basics.ipynb](notebooks/04-llm-basics.ipynb)** - Understanding Large Language Models (Executive level)
+
+- **[05-transformers.ipynb](notebooks/05-transformers.ipynb)** - Transformers and attention mechanism
+
+- **[06-computer-vision.ipynb](notebooks/06-computer-vision.ipynb)** - Computer vision with CNNs
 
 ## 👤 Author
 
