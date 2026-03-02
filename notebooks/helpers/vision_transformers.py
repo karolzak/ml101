@@ -284,7 +284,7 @@ def plot_attention_maps(
     elif cols == 1:
         axes = axes[:, np.newaxis]
 
-    img_np = image.permute(1, 2, 0).numpy()
+    img_np = image.permute(1, 2, 0).detach().cpu().numpy()
     img_np = np.clip(img_np, 0, 1)
 
     # Original image in first cell
@@ -297,7 +297,7 @@ def plot_attention_maps(
         r = (idx + 1) // cols
         c = (idx + 1) % cols
 
-        head_attn = cls_attn[head].detach().numpy()
+        head_attn = cls_attn[head].detach().cpu().numpy()
         head_attn = head_attn.reshape(n_patches_side, n_patches_side)
         # Normalize to [0, 1]
         head_attn = (head_attn - head_attn.min()) / (head_attn.max() - head_attn.min() + 1e-8)
@@ -394,7 +394,7 @@ def plot_attention_rollout(
     rollout_img = rollout_img.resize((image_size, image_size), PILImage.BILINEAR)
     rollout_np = np.array(rollout_img).astype(np.float32) / 255.0
 
-    img_np = image.permute(1, 2, 0).numpy()
+    img_np = image.permute(1, 2, 0).detach().cpu().numpy()
     img_np = np.clip(img_np, 0, 1)
 
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
