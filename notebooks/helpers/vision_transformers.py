@@ -7,9 +7,7 @@ clean and focused on concepts rather than implementation details.
 
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
-import seaborn as sns
+
 import torch
 
 
@@ -394,7 +392,7 @@ def plot_attention_rollout(
     rollout_img = rollout_img.resize((image_size, image_size), PILImage.BILINEAR)
     rollout_np = np.array(rollout_img).astype(np.float32) / 255.0
 
-    img_np = image.permute(1, 2, 0).numpy()
+    img_np = image.detach().cpu().permute(1, 2, 0).numpy()
     img_np = np.clip(img_np, 0, 1)
 
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
