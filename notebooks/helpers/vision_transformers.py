@@ -349,7 +349,7 @@ def compute_attention_rollout(attentions: tuple) -> np.ndarray:
     result = None
     for attn in attentions:
         # attn shape: (1, num_heads, seq_len, seq_len)
-        attn_heads_avg = attn[0].mean(dim=0).detach().numpy()  # (seq_len, seq_len)
+        attn_heads_avg = attn[0].mean(dim=0).detach().cpu().numpy()  # (seq_len, seq_len)
         # Add identity (residual connection)
         attn_heads_avg = 0.5 * attn_heads_avg + 0.5 * np.eye(attn_heads_avg.shape[0])
         # Re-normalize
