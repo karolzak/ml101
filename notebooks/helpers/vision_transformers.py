@@ -161,6 +161,87 @@ def plot_vit_architecture() -> None:
     print("   This is the SAME transformer architecture used for text (notebook 05)!")
 
 
+def plot_cls_attention_flow() -> None:
+    """
+    Diagram showing how the [CLS] token learns an image representation
+    by attending to all patch tokens through multiple transformer layers.
+    """
+    fig, ax = plt.subplots(figsize=(16, 9))
+    ax.set_xlim(0, 16)
+    ax.set_ylim(0, 9)
+    ax.axis("off")
+
+    # Styles
+    patch_style = dict(boxstyle="round,pad=0.2", facecolor="#AED6F1", edgecolor="black", lw=1.5)
+    cls_style   = dict(boxstyle="round,pad=0.2", facecolor="#ABEBC6", edgecolor="black", lw=1.5)
+    out_style   = dict(boxstyle="round,pad=0.2", facecolor="#D7BDE2", edgecolor="black", lw=1.5)
+    head_style  = dict(boxstyle="round,pad=0.3", facecolor="#F1948A", edgecolor="black", lw=1.5)
+
+    # ── Row 1: Input tokens ──
+    ax.text(8, 8.3, "Input Sequence", ha="center", fontsize=13, fontweight="bold")
+    ax.text(2, 7.3, "[CLS]\n(random)", ha="center", va="center", fontsize=9, fontweight="bold", bbox=cls_style)
+    for i, label in enumerate(["Patch 1", "Patch 2", "Patch 3", "...", "Patch 196"]):
+        x = 4.5 + i * 2.2
+        style = patch_style if label != "..." else dict(boxstyle="round,pad=0.2", facecolor="white", edgecolor="white")
+        ax.text(x, 7.3, label, ha="center", va="center", fontsize=9,
+                fontweight="bold" if label != "..." else "normal", bbox=style)
+
+    # ── Arrows down to attention ──
+    arrow_kw = dict(arrowstyle="-|>", lw=1.5, color="#555555")
+    for x in [2, 4.5, 6.7, 8.9, 13.3]:
+        ax.annotate("", xy=(x, 6.2), xytext=(x, 6.8), arrowprops=arrow_kw)
+
+    # ── Row 2: Self-Attention block ──
+    ax.add_patch(plt.Rectangle((0.8, 5.0), 13.5, 1.2, fill=True, facecolor="#FEF9E7",
+                                 edgecolor="#F39C12", lw=2, zorder=0, clip_on=False))
+    ax.text(7.5, 5.6, "Self-Attention:  every token attends to every other token",
+            ha="center", va="center", fontsize=11, fontweight="bold", style="italic")
+
+    # Draw attention arrows from CLS to all patches (highlight!)
+    for x_end in [4.5, 6.7, 8.9, 13.3]:
+        ax.annotate("", xy=(x_end, 5.15), xytext=(2, 5.15),
+                    arrowprops=dict(arrowstyle="-|>", lw=1.2, color="#E74C3C",
+                                    connectionstyle="arc3,rad=0.15", alpha=0.6))
+
+    # Label the CLS→patch arrows
+    ax.text(7.5, 4.5, "[CLS] reads from ALL patches via attention weights",
+            ha="center", va="center", fontsize=10, color="#C0392B", fontweight="bold")
+
+    # ── Arrows down ──
+    for x in [2, 4.5, 6.7, 8.9, 13.3]:
+        ax.annotate("", xy=(x, 3.5), xytext=(x, 4.2), arrowprops=arrow_kw)
+
+    # ── Row 3: Output tokens ──
+    ax.text(8, 3.9, "x 12 layers", ha="center", fontsize=10, style="italic", alpha=0.6)
+    ax.text(2, 2.8, "[CLS]\n(now image\naware!)", ha="center", va="center", fontsize=9,
+            fontweight="bold", bbox=dict(boxstyle="round,pad=0.25", facecolor="#2ECC71",
+                                          edgecolor="black", lw=1.5))
+    for i, label in enumerate(["Patch 1'", "Patch 2'", "Patch 3'", "...", "Patch 196'"]):
+        x = 4.5 + i * 2.2
+        style = out_style if label != "..." else dict(boxstyle="round,pad=0.2", facecolor="white", edgecolor="white")
+        ax.text(x, 2.8, label, ha="center", va="center", fontsize=9,
+                fontweight="bold" if label != "..." else "normal", bbox=style)
+
+    # ── Arrow from CLS to classification head ──
+    ax.annotate("", xy=(2, 1.3), xytext=(2, 2.2), arrowprops=dict(arrowstyle="-|>", lw=2, color="#2ECC71"))
+    ax.text(2, 0.8, "Classification\nHead (MLP)", ha="center", va="center", fontsize=10,
+            fontweight="bold", bbox=head_style)
+    ax.text(5.5, 0.8, "<-- Only the [CLS] output is used for classification",
+            ha="left", va="center", fontsize=10, style="italic", color="#7D3C98")
+
+    ax.set_title("How [CLS] Learns an Image Representation Through Attention",
+                 fontsize=14, fontweight="bold", pad=15)
+    plt.tight_layout()
+    plt.show()
+
+    print("🔑 The [CLS] token starts with NO image information.")
+    print("   Through 12 layers of self-attention, it attends to all 196 patches,")
+    print("   gradually building a global image representation.")
+    print("   At the end, only the [CLS] output is passed to the classification head.")
+    print("\n💡 This is why 'attention maps' are meaningful: they show which patches")
+    print("   the [CLS] token relied on most to build its image understanding.")
+
+
 def plot_attention_maps(
     image: torch.Tensor,
     attentions: tuple,
