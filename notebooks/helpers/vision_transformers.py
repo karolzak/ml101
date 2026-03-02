@@ -7,9 +7,7 @@ clean and focused on concepts rather than implementation details.
 
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
-import seaborn as sns
+
 import torch
 
 
