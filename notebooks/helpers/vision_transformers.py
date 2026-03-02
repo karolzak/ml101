@@ -27,7 +27,7 @@ def plot_patching_process(image_tensor: torch.Tensor, patch_size: int = 4) -> No
     fig, axes = plt.subplots(1, 3, figsize=(16, 5))
 
     # --- Left: original image ---
-    img_np = image_tensor.permute(1, 2, 0).numpy()
+    img_np = image_tensor.permute(1, 2, 0).detach().cpu().numpy()
     img_np = np.clip(img_np, 0, 1)
     axes[0].imshow(img_np)
     axes[0].set_title("Original Image", fontsize=13, fontweight="bold")
@@ -61,7 +61,7 @@ def plot_patching_process(image_tensor: torch.Tensor, patch_size: int = 4) -> No
             patch = image_tensor[
                 :, pi * patch_size : (pi + 1) * patch_size, pj * patch_size : (pj + 1) * patch_size
             ]
-            patch_np = patch.permute(1, 2, 0).numpy()
+            patch_np = patch.permute(1, 2, 0).detach().cpu().numpy()
             patch_np = np.clip(patch_np, 0, 1)
 
             r = patch_idx // cols
@@ -282,7 +282,7 @@ def plot_attention_maps(
     elif cols == 1:
         axes = axes[:, np.newaxis]
 
-    img_np = image.permute(1, 2, 0).numpy()
+    img_np = image.permute(1, 2, 0).detach().cpu().numpy()
     img_np = np.clip(img_np, 0, 1)
 
     # Original image in first cell
@@ -295,7 +295,7 @@ def plot_attention_maps(
         r = (idx + 1) // cols
         c = (idx + 1) % cols
 
-        head_attn = cls_attn[head].detach().numpy()
+        head_attn = cls_attn[head].detach().cpu().numpy()
         head_attn = head_attn.reshape(n_patches_side, n_patches_side)
         # Normalize to [0, 1]
         head_attn = (head_attn - head_attn.min()) / (head_attn.max() - head_attn.min() + 1e-8)
@@ -347,7 +347,7 @@ def compute_attention_rollout(attentions: tuple) -> np.ndarray:
     result = None
     for attn in attentions:
         # attn shape: (1, num_heads, seq_len, seq_len)
-        attn_heads_avg = attn[0].mean(dim=0).detach().numpy()  # (seq_len, seq_len)
+        attn_heads_avg = attn[0].mean(dim=0).detach().cpu().numpy()  # (seq_len, seq_len)
         # Add identity (residual connection)
         attn_heads_avg = 0.5 * attn_heads_avg + 0.5 * np.eye(attn_heads_avg.shape[0])
         # Re-normalize
@@ -392,7 +392,7 @@ def plot_attention_rollout(
     rollout_img = rollout_img.resize((image_size, image_size), PILImage.BILINEAR)
     rollout_np = np.array(rollout_img).astype(np.float32) / 255.0
 
-    img_np = image.detach().cpu().permute(1, 2, 0).numpy()
+    img_np = image.permute(1, 2, 0).detach().cpu().numpy()
     img_np = np.clip(img_np, 0, 1)
 
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
