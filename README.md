@@ -85,6 +85,8 @@ The course progresses from fundamentals through advanced topics in modern machin
 
 - **[06-computer-vision.ipynb](notebooks/06-computer-vision.ipynb)** - Computer vision with CNNs
 
+- **[07-vision-transformers.ipynb](notebooks/07-vision-transformers.ipynb)** - Vision Transformers (ViT) and CLIP
+
 ## 👤 Author
 
 **Karol Zak** - [karolzak](https://github.com/karolzak)
